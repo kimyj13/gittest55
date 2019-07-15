@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?> <!--한글처리, 사용안할시 삭제하면 된다-->
+<!-- 연결정보 저장되어 있음 1&2단계 한꺼번에 처리 하긔 - 
+디비연결시간을 줄여줌으로써 속도가 좀더 빨라짐 -ㅁ-  -->
+<Context>
+ <Resource name="jdbc/MysqlDB" 
+				auth="Container"
+				type="javax.sql.DataSource"
+				driverClassName="com.mysql.jdbc.Driver"
+				url="jdbc:mysql://localhost:3306/jspdb5"
+				username="jspid"
+				password="jsppass"/>
+</Context>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
