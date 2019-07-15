@@ -33,6 +33,7 @@
 
 </head>
 <body>
+<h1>main</h1>
 <div id="wrap">
 <!-- 헤더파일들어가는 곳, 모든 페이지에 동일하게 보이는 top을 따로 만들어서 연결하기-->
 <jsp:include page="../inc/top.jsp" />
