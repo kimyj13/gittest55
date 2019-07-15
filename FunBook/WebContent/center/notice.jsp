@@ -98,8 +98,26 @@ if(count !=0){
 		BoardBean bb = boardList.get(i); //제네릭 사용시 형변환 안해도 됨//속도 업!
 	
 %>
-<tr onclick="location.href='content.jsp?num=<%=bb.getNum()%>&pageNum=<%=pageNum%>'" ><td><%=num-- %></td>
-<td ><%=bb.getSubject() %></td>
+<tr onclick="location.href='content.jsp?num=<%=bb.getNum()%>&pageNum=<%=pageNum%>'" >
+
+
+
+<td><%=num-- %></td>
+
+<td>
+
+<%
+int wid=0;
+if(bb.getRe_lev() > 0){ //re_seq보다는  re_lev로 비교하긔
+	wid = bb.getRe_lev()*10;
+	%>
+	<img src="level.gif" width="<%=wid %>">
+	<img src="re.gif">
+<%
+}
+%>
+
+<%=bb.getSubject() %></td>
 <td ><%=bb.getName() %></td><td><%=sdf.format(bb.getDate())%></td><td><%=bb.getReadcount() %></td></tr>    
     <%
 	}   } %>

@@ -14,6 +14,7 @@ import javax.sql.DataSource;
 
 
 
+
 public class BoardDAO {
 Connection con;
 PreparedStatement ps;
@@ -47,8 +48,8 @@ ResultSet rs;
 				 //가져온 값이 null이면 글번호 1이 생성되는거고 1이면 다음 값으로 생성해서 넘기는거고
 			 }
 			 
-			sql="insert into board(num, name, pass, subject, content, readcount, date, file)"
-					+ " values(?, ?, ?, ?, ?, ?, now(),?)";
+			sql="insert into board(num, name, pass, subject, content, readcount, date, file, re_ref, re_lev, re_seq) "
+			 		+ "values(?, ?, ?, ?, ?, ?, now(), ?, ?, ?, ?)";
 			 ps = con.prepareStatement(sql);
 			 ps.setInt(1, num);//글번호 값은 위에서 생성하는 식을 따로 작성했음
 			 ps.setString(2, bb.getName());
@@ -57,6 +58,10 @@ ResultSet rs;
 			 ps.setString(5, bb.getContent());
 			 ps.setInt(6, 0);//readcount
 			 ps.setString(7, bb.getFile());
+			 ps.setInt(8, num); //그룹번호 re_ref == num //원글이랑 답글이랑 그룹으로 묶어주기
+			 ps.setInt(9, 0);//들여쓰기 re_lev = 0 초기 값들을 0으로 설정하기 답글 달 경우reInsertBoard()에서 번호 추가
+			 ps.setInt(10, 0);//순서   re_seq = 0
+			 
 			 ps.executeUpdate(); //sql실행		
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -64,6 +69,62 @@ ResultSet rs;
 		closeDB();
 		}
 	}//insertBoard()
+	
+	public void reInsertBoard(BoardBean bb) {
+		//finally 에서 정리해주기 위해 try 밖에서 선언을 해준다.
+		Connection con = null;
+		PreparedStatement ps =null; 
+		ResultSet rs =null;
+		int num=0; //글번호 입력할 변수	
+	try {	
+			con = getConnection(); //1, 2단계
+			//3단계
+			 String sql="select max(num) from board";//글번호 제일 큰값 검색
+			 ps = con.prepareStatement(sql);
+			 //4단계
+			 rs = ps.executeQuery();
+			 //5단계
+			 if(rs.next()) {//MAX해서 가져온 글번호로 커서 이동
+				 num = rs.getInt("max(num)")+1; //가져온 글번호 +1해서 num에 저장하기
+				 //가져온 값이 null이면 글번호 1이 생성되는거고 1이면 다음 값으로 생성해서 넘기는거고
+			 }
+			 
+			 sql = "update board set re_seq=re_seq+1 where re_ref=? AND re_seq > ?";
+			 ps = con.prepareStatement(sql);
+			 //답글 순서 재배치 
+			 ps.setInt(1, bb.getRe_ref());
+			 ps.setInt(2, bb.getRe_seq());
+			 ps.executeUpdate();
+
+
+			//3단계sql(insert) 만들고 실행할 객체 생성
+			 //답글 추가하기 re_ref(그룹번호)       re_lev(들여쓰기)     re_seq(순서)
+			 sql="insert into board(num, name, pass, subject, content, readcount, date, file, re_ref, re_lev, re_seq) values(?, ?, ?, ?, ?, ?, now(), ?, ?, ?, ?)"; //날짜는 디비에서 따로 생성한다. now()
+				
+			 ps = con.prepareStatement(sql);
+			 ps.setInt(1, num);//글번호 값은 위에서 생성하는 식을 따로 작성했음
+			 ps.setString(2, bb.getName());
+			 ps.setString(3, bb.getPass());
+			 ps.setString(4, bb.getSubject());
+			 ps.setString(5, bb.getContent());
+			 ps.setInt(6, 0);
+			 ps.setString(7, bb.getFile());
+			 ps.setInt(8, bb.getRe_ref()); //그룹번호 re_ref 그대로 사용
+			 ps.setInt(9, bb.getRe_lev()+1);//들여쓰기 re_lev 는 +1
+			 ps.setInt(10, bb.getRe_seq()+1);//순서   re_seq 는 +1
+			 
+			 ps.executeUpdate(); //sql실행
+			 
+		} catch (Exception e) {
+		e.printStackTrace();
+		}finally {
+			//마무리작업 //메모리 사용 후 회수하는 작업
+			//기억장소(공간) con, ps, rs 정리(회수) 작업: 만드는 역순으로 정리한다.
+			if(rs != null) try {rs.close();}catch(SQLException ex){} //예외처리를 안하면 오류가 난다. try { 정리할 변수 }catch(SQLException ex){}
+			if(ps != null)try {ps.close();}catch (SQLException ex) {}
+			if(con != null)try {con.close();} catch (SQLException ex) {}
+		}
+	}//reinsertBoard()
 	
 	public int getBoardCount() {
 		con = null;
@@ -115,7 +176,7 @@ ResultSet rs;
 			con = getConnection();
 			 
 			 //3단계 sql문 
-			 String sql="select * from board order by num desc limit ?, ?";
+			String sql="select * from board order by re_ref desc, re_seq asc limit ?, ?";
 			ps = con.prepareStatement(sql);
 			ps.setInt(1, startRow-1);//시작행-1(시작행을 포함하지 않기 때문에 -1을 해준다)
 			ps.setInt(2, pageSize);
@@ -131,6 +192,9 @@ ResultSet rs;
 				 bb.setReadcount(rs.getInt("readcount"));
 				 bb.setDate(rs.getDate("date"));
 				 bb.setFile(rs.getString("file"));
+				 bb.setRe_ref(rs.getInt("re_ref"));
+				 bb.setRe_lev(rs.getInt("re_lev"));
+				 bb.setRe_seq(rs.getInt("re_seq"));
 				 boardList.add(bb);//배열에 한개의 글 정보를 배열 한칸에 저장						 
 			 }
 		} catch (Exception e) {
@@ -168,6 +232,7 @@ ResultSet rs;
 				 bb.setName(rs.getString("name"));
 				 bb.setReadcount(rs.getInt("readcount"));
 				 bb.setDate(rs.getDate("date"));
+
 				 boardList.add(bb);//배열에 한개의 글 정보를 배열 한칸에 저장		
 				 
 			 }
@@ -178,7 +243,7 @@ ResultSet rs;
 			closeDB();
 		}
 		return boardList;
-	}
+	}//getBoardList(search)
 
 	public void updateReadcount(int num) {
 		con = null;
@@ -222,6 +287,9 @@ ResultSet rs;
 			bb.setSubject(rs.getString("subject"));
 			bb.setContent(rs.getString("content"));
 			bb.setFile(rs.getString("file"));
+			bb.setRe_ref(rs.getInt("re_ref"));
+			bb.setRe_lev(rs.getInt("re_lev"));
+			bb.setRe_seq(rs.getInt("re_seq"));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

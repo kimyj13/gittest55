@@ -105,10 +105,15 @@ bb = bdao.getboard(num);
 if(id !=null){
 if(id.equals(bb.getName()) || id.equals("admin")){
 	%>
-	<input type="button" value="글수정" class="btn" onclick="location.href='updateForm.jsp?num=<%=num%>&pageNum=<%=pageNum%>'">
+<input type="button" value="글수정" class="btn" onclick="location.href='updateForm.jsp?num=<%=num%>&pageNum=<%=pageNum%>'">
 <input type="button" value="글삭제" class="btn" onclick="location.href='deleteForm.jsp?num=<%=num%>&pageNum=<%=pageNum%>'">
+
 <%
-}}
+}
+%>
+<input type="button" value="답글쓰기" class="btn" onclick="location.href='rewriteForm.jsp?num=<%=bb.getNum()%>&re_ref=<%=bb.getRe_ref() %>&re_lev=<%=bb.getRe_lev()%>&re_seq=<%=bb.getRe_seq() %>'">
+<%
+}
 %>
 <input type="button" value="글목록" class="btn" onclick="location.href='notice.jsp?pageNum=<%=pageNum%>'">
 </div>
